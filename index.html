@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>D3 Scatter Plot</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
+  <link rel="stylesheet" href="style.css" />
+  <script type="text/javascript" src="https://d3js.org/d3.v3.min.js"></script>
+  <script type="text/javascript" src="https://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+
+</head>
+
+<body>
+
+  <!--  -->
+  <!-- chart -->
+  <div class="jumbotron container-fluid padding">
+    <div class="row">
+      <div class="col-md-12 col-lg-6">
+        <h2>Heart Disease - Scatter Plot</h2>
+        <br>
+       
+        <ul>
+          <li>MentalHealth (X Axis)</li>
+          <li>SleepTime (Y Axis)</li>
+          <li>
+            Female
+            <div class="color-box" style="background-color: teal;"></div>
+          </li>
+          <li>
+            Male
+            <div class="color-box" style="background-color: yellow;"></div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id = chtv>
+    <p> Select the Gender :
+      <select id="chtpt">
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+      </select>
+    </p>  
+    <p> Heart Disease (Yes/No) :
+      <select id="chtpt1">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+    </p>
+
+    <button onclick="fullplot()">
+      Generate Chart
+    </button>
+
+    <button onclick="rest()">
+      Clear
+    </button>
+    
+    <div id="demo"></div>
+  </div>
+  <!--  -->
+  <script type="text/javascript">
+
+
+    var data = ""
+
+    d3.csv("data.csv", function (data1) {
+      data = data1
+    })
+
+    function rest(){
+      window.location.reload()
+    }
+    function fullplot() {
+      selectedValue = document.querySelector('#chtpt');
+      selectedValue1 = document.querySelector('#chtpt1');
+      console.log(selectedValue.value)
+      console.log(selectedValue1.value)
+      //window.location.reload(true);
+      var vl = selectedValue.value
+      var vl1 = selectedValue1.value
+      data = data.filter(function (d) { return d.Sex == vl })
+      data = data.filter(function (d) { return d.HeartDisease == vl1 })
+      //  d3.csv("../data/data.csv", function(data) {
+      var body = d3.select("#demo");
+      var margin = { top: 50, right: 50, bottom: 50, left: 50 };
+      var h = 500 - margin.top - margin.bottom;
+      var w = 1000 - margin.left - margin.right;
+      var formatPercent = d3.format(".5%");
+      // Scales
+      var xScale = d3.scale
+        .linear()
+        .domain([0, 30])
+        .range([0, w]);
+      var yScale = d3.scale
+        .linear()
+        .domain([0, 30])
+        .range([h, 0]);
+      // SVG
+      var svg = body
+        .append("svg")
+        .attr("height", h + margin.top + margin.bottom)
+        .attr("width", w + margin.left + margin.right)
+        .append("g")
+        .attr(
+          "transform",
+          "translate(" + margin.left + "," + margin.top + ")"
+        );
+      // X-axis
+      var xAxis = d3.svg
+        .axis()
+        .scale(xScale)
+        .ticks(5)
+        .orient("bottom");
+      // Y-axis
+      var yAxis = d3.svg
+        .axis()
+        .scale(yScale)
+        .ticks(5)
+        .orient("left");
+      // Circles
+      var circles = svg
+        .selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", function (d) {
+          return xScale(d.MentalHealth);
+        })
+        .attr("cy", function (d) {
+          return yScale(d.SleepTime);
+        })
+        .attr("r", "5")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .attr("fill", function (d) {
+          if (d.Sex == "Male") {
+            //Threshold of 15
+            return "yellow";
+          }
+          else {
+            return "teal";
+          }
+        })
+        .on("mouseover", function () {
+          d3.select(this)
+            .transition()
+            .duration(500)
+            .attr("r", 20)
+            .attr("stroke-width", 3);
+        })
+        .on("mouseout", function () {
+          d3.select(this)
+            .transition()
+            .duration(500)
+            .attr("r", 5)
+            .attr("stroke-width", 1);
+        })
+        .append("title") // Tooltip
+        .text(function (d) {
+          return (
+
+            d.Sex +
+            "\n MentalHealth : " +
+            d.MentalHealth +
+            "\n SleepTime: " +
+            d.SleepTime+
+            "\n HeartDisease: "+
+            d.HeartDisease
+          );
+        });
+      // X-axis
+      svg
+        .append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(0," + h + ")")
+        .call(xAxis)
+        .append("text") // X-axis Label
+        .attr("class", "label")
+        .attr("y", -10)
+        .attr("x", w)
+        .attr("dy", ".71em")
+        .style("text-anchor", "end")
+        .text("MentalHealth");
+      // Y-axis
+      svg
+        .append("g")
+        .attr("class", "axis")
+        .call(yAxis)
+        .append("text") // y-axis Label
+        .attr("class", "label")
+        .attr("transform", "rotate(-90)")
+        .attr("x", 0)
+        .attr("y", 5)
+        .attr("dy", ".71em")
+        .style("text-anchor", "end")
+        .text("SleepTime");
+      // });
+    }
+  </script>
+</body>
+<style>
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+  }
+
+  .axis text {
+    font-family: sans-serif;
+    font-size: 11px;
+  }
+</style>
+
+</html>
